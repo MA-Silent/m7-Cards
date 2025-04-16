@@ -2,6 +2,9 @@ import './style.css'
 
 const suits = ["♠", "♥", "♦", "♣"];
 const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10","J", "Q", "K", "A"];
+let players = [];
+let currentPlayer = 0;
+let currentCard;
 
 class Card {
   constructor(suit,rank, onPlay){
@@ -33,9 +36,22 @@ class Card {
     container.appendChild(center);
 
     container.onclick= ()=>{
-      console.log(`Card: ${this.rank} ${this.suit} was played`)
-      if (this.onPlay) {
-        this.onPlay(this);
+      if(players[currentPlayer].cards.includes(this)){
+        if(this.suit == currentCard.suit){
+          console.log(`Card: ${this.rank} ${this.suit} was played`)
+          if (this.onPlay) {
+            this.onPlay(this);
+            currentCard = this;
+          }
+        }else{
+          alert('You cannot play this card!')
+        }
+      }else{
+        if(currentCard === this){
+          alert('Cannot play the table card!')
+        }else{
+          alert('Cannot play not your turn!')
+        }
       }
     }
 
@@ -66,8 +82,9 @@ class Deck {
 };
 
 class Player {
-  constructor(deck){
+  constructor(deck, id){
     this.deck = deck;
+    this.id = id;
     this.cards =[];
     this.container = null;
     this.drawCards();
@@ -75,8 +92,8 @@ class Player {
 
   drawCards= ()=>{
     for (let i = 0; i < 7; i++) {
-      const rawCard = this.deck.cards.pop();
-      this.cards.push(new Card(rawCard.suit,rawCard.rank,this.playCard))
+      const card = this.deck.cards.pop();
+      this.cards.push(new Card(card.suit,card.rank,this.playCard))
     }
   }
 
@@ -84,10 +101,14 @@ class Player {
     document.getElementById('app').innerHTML='';
     cardToPlay.render(document.getElementById('app'));
     this.cards = this.cards.filter((card) => card !== cardToPlay);
-    this.render(this.container);
+    currentPlayer = (currentPlayer + 1)%players.length;
+    this.container.innerHTML = '';
+    players.forEach((player,index)=>{
+      player.render(this.container,index===currentPlayer)
+    })
   }
 
-  render = (root)=>{
+  render = (root,isCurrentPlayer)=>{
     if (!this.container) {
       this.container = document.createElement('div');
       root.appendChild(this.container);
@@ -95,7 +116,9 @@ class Player {
 
     this.container.innerHTML = '';
     this.container.style.display = 'flex';
-    this.container.style.background = 'white';
+    this.container.style.border = isCurrentPlayer ? '0.2rem dotted red' : '';
+    this.container.style.padding = '0.2rem'
+    this.container.style.borderRadius = '1rem';
 
     this.cards.forEach(card => {
       card.render(this.container);
@@ -109,10 +132,20 @@ function play(playerAmount){
     return;
   }
   const deck = new Deck();
+  const playerContainer = document.getElementById('players');
+
+  playerContainer.innerHTML ='';
+  players=[];
+  currentPlayer=0;
+
   for (let i = 0; i < playerAmount; i++) {
     const player = new Player(deck);
-    player.render(document.getElementById('players'));
+    players.push(player);
+    player.render(document.getElementById('players'), currentPlayer === i);
   }
+  const firstCard = deck.cards.pop();
+  currentCard = new Card(firstCard.suit,firstCard.rank,()=>{});
+  currentCard.render(document.getElementById('app'));
 }
 
 play(2);
