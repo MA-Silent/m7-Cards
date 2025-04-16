@@ -4,9 +4,10 @@ const suits = ["♠", "♥", "♦", "♣"];
 const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10","J", "Q", "K", "A"];
 
 class Card {
-  constructor(suit,rank){
+  constructor(suit,rank, onPlay){
     this.suit = suit;
     this.rank = rank;
+    this.onPlay = onPlay;
   }
 
   render = (root)=>{
@@ -31,6 +32,13 @@ class Card {
     container.appendChild(bottomRight);
     container.appendChild(center);
 
+    container.onclick= ()=>{
+      console.log(`Card: ${this.rank} ${this.suit} was played`)
+      if (this.onPlay) {
+        this.onPlay(this);
+      }
+    }
+
     root.appendChild(container);
   }
 };
@@ -40,7 +48,7 @@ class Deck {
     this.cards = [];
     for(let suit =0;suit<suits.length;suit++){
       for(let rank=0;rank<ranks.length;rank++){
-        this.cards.push(new Card(suits[suit],ranks[rank]));
+        this.cards.push({ suit: suits[suit], rank: ranks[rank] });
       }
     }
     this.shuffle();
@@ -55,7 +63,55 @@ class Deck {
     }
     
   }
+};
+
+class Player {
+  constructor(deck){
+    this.deck = deck;
+    this.cards =[];
+    this.container = null;
+    this.drawCards();
+  }
+
+  drawCards= ()=>{
+    for (let i = 0; i < 7; i++) {
+      const rawCard = this.deck.cards.pop();
+      this.cards.push(new Card(rawCard.suit,rawCard.rank,this.playCard))
+    }
+  }
+
+  playCard = (cardToPlay) =>{
+    document.getElementById('app').innerHTML='';
+    cardToPlay.render(document.getElementById('app'));
+    this.cards = this.cards.filter((card) => card !== cardToPlay);
+    this.render(this.container);
+  }
+
+  render = (root)=>{
+    if (!this.container) {
+      this.container = document.createElement('div');
+      root.appendChild(this.container);
+    }
+
+    this.container.innerHTML = '';
+    this.container.style.display = 'flex';
+    this.container.style.background = 'white';
+
+    this.cards.forEach(card => {
+      card.render(this.container);
+    });
+  }
+};
+
+function play(playerAmount){
+  if(playerAmount != 2 && playerAmount != 3){
+    document.body.innerText = `Invalid number of players must be 2 or 3`
+  }
+  const deck = new Deck();
+  for (let i = 0; i < playerAmount; i++) {
+    const player = new Player(deck);
+    player.render(document.getElementById('players'));
+  }
 }
 
-
-const testCard = new Deck().cards[51].render(document.getElementById('app'));
+play(2);
