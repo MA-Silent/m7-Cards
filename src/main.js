@@ -37,7 +37,7 @@ class Card {
 
     container.onclick= ()=>{
       if(players[currentPlayer].cards.includes(this)){
-        if(this.suit == currentCard.suit){
+        if(this.suit == currentCard.suit || this.rank == currentCard.rank){
           console.log(`Card: ${this.rank} ${this.suit} was played`)
           if (this.onPlay) {
             this.onPlay(this);
@@ -54,7 +54,6 @@ class Card {
         }
       }
     }
-
     root.appendChild(container);
   }
 };
@@ -87,31 +86,50 @@ class Player {
     this.id = id;
     this.cards =[];
     this.container = null;
-    this.drawCards();
+    this.drawCards(7);
   }
 
-  drawCards= ()=>{
-    for (let i = 0; i < 7; i++) {
+  drawCards = (amount)=>{
+    for (let i = 0; i < amount; i++) {
       const card = this.deck.cards.pop();
-      this.cards.push(new Card(card.suit,card.rank,this.playCard))
+      this.cards.push(new Card(card.suit,card.rank,this.playCard));
     }
   }
 
-  playCard = (cardToPlay) =>{
+  playCard = (cardToPlay)=>{
     document.getElementById('app').innerHTML='';
     cardToPlay.render(document.getElementById('app'));
     this.cards = this.cards.filter((card) => card !== cardToPlay);
     currentPlayer = (currentPlayer + 1)%players.length;
+
+    if(cardToPlay.rank == "7"){alert('Draw 2');players[currentPlayer].drawCards(2)};
+    if(cardToPlay.rank == "8"){alert('Skip!');currentPlayer = (currentPlayer + 1)%players.length;};
+    if(cardToPlay.rank == "J"){
+      const change = document.createElement('div');
+      const changeContent = document.createElement('div');
+      changeContent.id = 'changeContent';
+      change.id = 'change';
+      for (let i = 0; i < 4; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = `${suits[i]}`;
+        btn.onclick = ()=>{currentCard.suit = btn.innerText;try{document.getElementById('change').remove();document.getElementById('app').innerHTML='';currentCard.render(document.getElementById('app'))}catch{}};
+        changeContent.appendChild(btn);
+      }
+      change.appendChild(changeContent);
+      document.getElementById('app').appendChild(change);
+    };
+    if(this.cards.length <= 0){alert(`Player ${(currentPlayer == 1) ? 1:2} wins!🎊🎊`); location.reload()}
+
     this.container.innerHTML = '';
-    players.forEach((player,index)=>{
-      player.render(this.container,index===currentPlayer)
+    players.forEach((player,i)=>{
+      player.render(this.container,i===currentPlayer);
     })
   }
 
   render = (root,isCurrentPlayer)=>{
     if (!this.container) {
       this.container = document.createElement('div');
-      root.appendChild(this.container);
+      root.appendChild(this.container)
     }
 
     this.container.innerHTML = '';
