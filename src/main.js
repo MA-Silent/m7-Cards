@@ -105,7 +105,8 @@ class Player {
 
 function play(playerAmount){
   if(playerAmount != 2 && playerAmount != 3){
-    document.body.innerText = `Invalid number of players must be 2 or 3`
+    document.body.innerText = `Invalid number of players must be 2 or 3`;
+    return;
   }
   const deck = new Deck();
   for (let i = 0; i < playerAmount; i++) {
